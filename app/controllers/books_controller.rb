@@ -46,6 +46,13 @@ class BooksController < ApplicationController
 
     # Only allow a trusted parameter "white list" through.
     def book_params
-      params.require(:book).permit(:title, :price, :author_id, :publisher_id, :publisher_type)
+      # params.require(:book).permit(:title, :price, :author_id, :publisher_id, :publisher_type)
+      # Ember adheres to JSON API and sends payload keys in plural lowercase. For example, authors.
+      # It turns out the AMS key_transform is not very smart with deserialization. 
+      # Rails does not understand that polymorphic type authors refers to the Author class. 
+      # Without that singularization/capitalization line, Rails isn’t able to find the class and throws an exception.
+      res = ActiveModelSerializers::Deserialization.jsonapi_parse(params, polymorphic: [:publisher])
+      res[:publisher_type] = res[:publisher_type].singularize.capitalize
+      res
     end
 end
